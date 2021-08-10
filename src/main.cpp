@@ -23,8 +23,12 @@ void process_incoming_msg(String topic, String incoming);
 //-------------------VARIABLES GLOBALES--------------------------
 int contconexion = 0;
 
-const char *ssid = "TeleCentro-82ba";
-const char *password = "U2N2ZMLR2NQZ";
+//const char *ssid = "TeleCentro-82ba";
+//const char *password = "U2N2ZMLR2NQZ";
+
+const char *ssid = "webiot";
+const char *password = "webiotpswd";
+
 const char *mqtt_server = "webiot.com.ar";
 const int mqtt_port = 1893;
 
