@@ -1,290 +1,337 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="A layout example with a side menu that hides on mobile, just like the Pure website.">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="A layout example with a side menu that hides on mobile, just like the Pure website."
+    />
     <title>Webiot Device</title>
+
     <link rel="stylesheet" href="css/pure-2.0.3.min.css" inline />
-    <link rel="stylesheet" href="css/pure-g-r-2.0.3.min.css" inline />
     <link rel="stylesheet" href="css/side-menu.css" inline />
     <link rel="stylesheet" href="css/custom.css" inline />
-
     <script src="js/jquery.min.js"></script>
 
-    <!-- getDigitalOutput() -->       
+    <!-- getDigitalOutput() -->
     <script>
-	    // Refresh values
-        $(document).ready(function() {
-            setInterval("get_digital_output_status()", 1000);
-            setInterval("get_status_registers()", 1000);
+      // Refresh values
+      $(document).ready(function () {
+        setInterval("get_digital_output_status()", 1000);
+        setInterval("get_status_registers()", 1000);
+      });
+
+      function get_digital_output_status() {
+        var someUrl = "/digital_outputs";
+        $.ajax({
+          url: someUrl,
+          dataType: "json",
+          success: function (response) {
+            if (response.digital_outputs["dout1"] == 1)
+              $("#dout1").html("HIGH");
+            else $("#dout1").html("LOW");
+
+            if (response.digital_outputs["dout2"] == 1)
+              $("#dout2").html("HIGH");
+            else $("#dout2").html("LOW");
+          },
         });
-    
-        
-        function get_digital_output_status() { var someUrl = "/digital_outputs";
-            $.ajax({url: someUrl,dataType: "json",success: function(response) {
-                    if (response.digital_outputs["dout1"] == 1)
-                        $("#dout1").html("HIGH")
-                    else
-                        $("#dout1").html("LOW")
+      }
 
-                    if (response.digital_outputs["dout2"] == 1)
-                        $("#dout2").html("HIGH")
-                    else
-                        $("#dout2").html("LOW")
-                    }
-                }
-                )
+      function digital_output_toggle(pinToToggle) {
+        var someUrl = "/digital_outputs/toggle?pin=" + pinToToggle;
+        $.ajax({
+          url: someUrl,
+          dataType: "text",
+          success: function (response) {
+            if (response == "1") {
+              $("#" + pinToToggle).html("HIGH");
+            } else if (response == "0") {
+              $("#" + pinToToggle).html("LOW");
+            } else {
+              alert("failed to toggle digital output");
             }
-    
-    
-    
-        function digital_output_toggle(pinToToggle) {var someUrl = "/digital_outputs/toggle?pin=" + pinToToggle;
-            $.ajax({url: someUrl,dataType: "text", success: function(response) {
-                    if (response == '1') {
-                        $('#' + pinToToggle).html("HIGH");
-                    } else if (response == '0') {
-                        $('#' + pinToToggle).html("LOW");
-                    } else {
-                        alert("failed to toggle digital output")
-                    }}})}
+          },
+        });
+      }
 
-        function get_status_registers (){ var someUrl = "/registers";
-        $.ajax({url: someUrl,dataType: "json",success: function(response) {
-            $("#reg1").html(response.registers["reg1"])
-            $("#reg2").html(response.registers["reg2"])
-        }})}          
-
-    
+      function get_status_registers() {
+        var someUrl = "/registers";
+        $.ajax({
+          url: someUrl,
+          dataType: "json",
+          success: function (response) {
+            $("#reg1").html(response.registers["reg1"]);
+            $("#reg2").html(response.registers["reg2"]);
+          },
+        });
+      }
     </script>
-</head>
-<body>
+  </head>
+
+  <body>
     <!-- layout -->
-<div id="layout" class="active"> 
-        <!-- getDigitalOutput() -->
-    <a href="#menu" id="menuLink" class="menu-link active">
-         <span></span>
-    </a>
-    <div id="menu" class="active">
-
+    <div id="layout" class>
+      <a href="#menu" id="menuLink" class="menu-link">
+        <span></span>
+      </a>
+      <div id="menu" class>
         <div class="pure-menu">
-            <a class="pure-menu-heading" href="#">Web IOT</a>
+          <span class="pure-menu-heading" name="hostname">HOSTNAME</span>
+          <span class="pure-menu-heading small" name="title"
+            >DemoIOT 0.0.0</span
+          >
+          <span class="pure-menu-heading small" name="desc"></span>
 
-            <ul class="pure-menu-list">
-                <li class="pure-menu-item"><a href="#" class="pure-menu-link" data="panel-status">Status</a></li>
-                <li class="pure-menu-item"><a href="#" class="pure-menu-link" data="panel-mqtt">Mqtt</a></li>
-                <li class="pure-menu-item"><a href="#" class="pure-menu-link" data="panel-event">Events</a></li>
-                <li class="pure-menu-item"><a href="#" class="pure-menu-link" data="panel-contact">Contact</a></li>
-                <li class="pure-menu-item"><a href="#" class="pure-menu-link" data="panel-wifi">WIFI</a></li>
-            </ul>
+          <ul class="pure-menu-list">
+            <li class="pure-menu-item">
+              <a href="#" class="pure-menu-link" id="link-status">STATUS</a>
+            </li>
+            <li class="pure-menu-item">
+              <a href="#" class="pure-menu-link" id="link-mqtt">MQTT</a>
+            </li>
+            <li class="pure-menu-item">
+              <a href="#" class="pure-menu-link" id="link-events">EVENTS</a>
+            </li>
+            <li class="pure-menu-item">
+              <a href="#" class="pure-menu-link" id="link-wifi">WIFI</a>
+            </li>
+          </ul>
         </div>
 
         <div class="main-buttons">
-            <button class="pure-button button-update">Save</button>
-            <button class="pure-button button-reconnect">Reconnect</button>
-            <button class="pure-button button-reboot">Reboot</button>
+          <button class="pure-button button-update">Save</button>
+          <button class="pure-button button-reconnect">Reconnect</button>
+          <button class="pure-button button-reboot">Reboot</button>
         </div>
 
         <div class="footer">
-            &copy; 2018-2021<br />
-            Raúl Avila<br/>
-            <a href="https://twitter.com/avila_raul" rel="noopener" target="_blank">@avila_raul</a><br/>
-            <a href="https://webiot.com.ar" rel="noopener" target="_blank">https://webiot.com.ar</a><br/>
-            <a href="https://github.com/RaulAvila2002/webiot" rel="noopener" target="_blank">WebIOT @ GitHub</a><br/>
-            GPLv3 license<br/>
+          &copy; 2018-2021<br />
+          Raúl Avila<br />
+          <a
+            href="https://twitter.com/avila_raul"
+            rel="noopener"
+            target="_blank"
+            >@avila_raul</a
+          ><br />
+          <a href="https://webiot.com.ar" rel="noopener" target="_blank"
+            >https://webiot.com.ar</a
+          ><br />
+          <a
+            href="https://github.com/RaulAvila2002/webiot"
+            rel="noopener"
+            target="_blank"
+            >WebIOT @ GitHub</a
+          ><br />
+          GPLv3 license<br />
         </div>
-    </div>
-
-    <div class="content">
-
-    <div class="panel block" id="panel-status">
-
-        <div class="header">
+      </div>
+      <!-- menu -->
+      <div class="content">
+        <div class="panel block" id="panel-status">
+          <div class="header">
             <h1>Status</h1>
             <h2>Last values</h2>
-        </div>
+          </div>
 
-        <div class="page">
-            <h2 class="content-subhead">How to use this layout</h2>
-            <p>
-                To use this layout, you can just copy paste the HTML, along with the CSS in <a href="css/styles.css" alt="Side Menu CSS">side-menu.css</a>, and the JavaScript in <a href="ui.js">ui.js</a>. The JS file uses vanilla JavaScript to simply toggle an <code>active</code> class that makes the menu responsive.
-            </p>
-
-            <h2 class="content-subhead">Now Let's Speak Some Latin</h2>
+          <div class="page">
             <table>
-                <tr>
-                    <th>Digital Ouput</th>
-                    <th>Status</th>
-                    <th>Option</th>
-                </tr>
-                <tr>
-                    <td>DOut1</td>
-                    <td id="dout1">waiting..</td>
-                    <td>
-                        <button class="pure-button " onclick="digital_output_toggle('dout1')">Toggle</button>
-                    </td>
-                </tr>
-                <tr>
-                    <td>DOut2</td>
-                    <td id="dout2">waiting..</td>
-                    <td>
-                        <button class="pure-button " onclick="digital_output_toggle('dout2')">Toggle</button>
-                    </td>    
-                </tr>
+              <tr>
+                <th>Digital Ouput</th>
+                <th>Status</th>
+                <th>Option</th>
+              </tr>
+              <tr>
+                <td>DOut1</td>
+                <td id="dout1">waiting..</td>
+                <td>
+                  <button
+                    class="pure-button"
+                    onclick="digital_output_toggle('dout1')"
+                  >
+                    Toggle
+                  </button>
+                </td>
+              </tr>
+              <tr>
+                <td>DOut2</td>
+                <td id="dout2">waiting..</td>
+                <td>
+                  <button
+                    class="pure-button"
+                    onclick="digital_output_toggle('dout2')"
+                  >
+                    Toggle
+                  </button>
+                </td>
+              </tr>
             </table>
 
             <table>
-                <tr>
-                    <td>REG1</td>
-                    <td id="reg1">waiting..</td>
-                </tr>
-                <tr>
-                    <td>REG2</td>
-                    <td id="reg2">waiting..</td>
-                </tr>                
-            </table>    
-
-
-            <h2 class="content-subhead">Try Resizing your Browser</h2>
-            <p>
-                Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
-            </p>
+              <tr>
+                <td>REG1</td>
+                <td id="reg1">waiting..</td>
+              </tr>
+              <tr>
+                <td>REG2</td>
+                <td id="reg2">waiting..</td>
+              </tr>
+            </table>
+          </div>
         </div>
-    </div>
- 
+        <div class="panel" id="panel-mqtt">
+          <div class="header">
+            <h1>MQTT</h1>
+            <h2>Configurations</h2>
+          </div>
 
-    <form id="form-mqtt" class="pure-form form-settings">
-        <div class="panel" id="panel-mqtt" >
-        <div class="header">
-            <h1>Broker Config</h1>
-            <h2>A subtitle for your page goes here</h2>
+          <div class="page"></div>
+          <form class="pure-form pure-form-aligned">
+            <fieldset>
+              <div class="pure-control-group">
+                <label for="aligned-name">Username</label>
+                <input type="text" id="aligned-name" placeholder="Username" />
+                <span class="pure-form-message-inline"
+                  >This is a required field.</span
+                >
+              </div>
+              <div class="pure-control-group">
+                <label for="aligned-password">Password</label>
+                <input
+                  type="password"
+                  id="aligned-password"
+                  placeholder="Password"
+                />
+              </div>
+              <div class="pure-control-group">
+                <label for="aligned-email">Email Address</label>
+                <input
+                  type="email"
+                  id="aligned-email"
+                  placeholder="Email Address"
+                />
+              </div>
+              <div class="pure-control-group">
+                <label for="aligned-foo">Supercalifragilistic Label</label>
+                <input
+                  type="text"
+                  id="aligned-foo"
+                  placeholder="Enter something here..."
+                />
+              </div>
+              <div class="pure-controls">
+                <label for="aligned-cb" class="pure-checkbox">
+                  <input type="checkbox" id="aligned-cb" /> I&#x27;ve read the
+                  terms and conditions
+                </label>
+                <button type="submit" class="pure-button pure-button-primary">
+                  Submit
+                </button>
+              </div>
+            </fieldset>
+          </form>
         </div>
-    
-            <div class="page">
-                <h2 class="content-subhead">How to use this layout</h2>
-                <p>
-                    To use this layout, you can just copy paste the HTML, along with the CSS in <a href="css/styles.css" alt="Side Menu CSS">side-menu.css</a>, and the JavaScript in <a href="ui.js">ui.js</a>. The JS file uses vanilla JavaScript to simply toggle an <code>active</code> class that makes the menu responsive.
-                </p>
 
-                <h2 class="content-subhead">Now Let's Speak Some Latin</h2>
-                <p>
-                    Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
-                </p>
+        <div class="panel" id="panel-events">
+          <div class="header">
+            <h1>EVENTS</h1>
+            <h2>Last events</h2>
+          </div>
 
-                <h2 class="content-subhead">Try Resizing your Browser</h2>
-                <p>
-                    Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
-                </p>
+          <div class="page"></div>
+          <div class="grids-example">
+            <div class="pure-g">
+              <div class="pure-u-1-3">
+                <div class="l-box">
+                  <h3>Thirds</h3>
+                  <p>This cell will be 1/3 width all the time.</p>
+                </div>
+              </div>
+              <div class="pure-u-1-3">
+                <div class="l-box">
+                  <h3>Thirds</h3>
+                  <p>This cell will be 1/3 width all the time.</p>
+                </div>
+              </div>
+              <div class="pure-u-1-3">
+                <div class="l-box">
+                  <h3>Thirds</h3>
+                  <p>This cell will be 1/3 width all the time.</p>
+                </div>
+              </div>
             </div>
+          </div>
         </div>
-    </form>
 
-    <form id="form-event" class="pure-form form-settings">
-        <div class="panel" id="panel-event" >
-            <div class="header">
-                <h1>Events</h1>
-                <h2>A subtitle for your page goes here</h2>
-            </div>
-
-            <div class="page">
-                <h2 class="content-subhead">How to use this layout</h2>
-                <p>
-                    To use this layout, you can just copy paste the HTML, along with the CSS in <a href="css/styles.css" alt="Side Menu CSS">side-menu.css</a>, and the JavaScript in <a href="ui.js">ui.js</a>. The JS file uses vanilla JavaScript to simply toggle an <code>active</code> class that makes the menu responsive.
-                </p>
-
-                <h2 class="content-subhead">Now Let's Speak Some Latin</h2>
-                <p>
-                    Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
-                </p>
-
-                <h2 class="content-subhead">Try Resizing your Browser</h2>
-                <p>
-                    Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
-                </p>
-            </div>
-        </div>
-    </form>
-
-    <form id="form-contact" class="pure-form form-settings">
-        <div class="panel" id="panel-contact">
-            <div class="header">
-                <h1>Contact Config</h1>
-                <h2>A subtitle for your page goes here</h2>
-            </div>
-
-            <div class="page">
-                <h2 class="content-subhead">How to use this layout</h2>
-                <p>
-                    To use this layout, you can just copy paste the HTML, along with the CSS in <a href="css/styles.css" alt="Side Menu CSS">side-menu.css</a>, and the JavaScript in <a href="ui.js">ui.js</a>. The JS file uses vanilla JavaScript to simply toggle an <code>active</code> class that makes the menu responsive.
-                </p>
-
-                <h2 class="content-subhead">Now Let's Speak Some Latin</h2>
-                <p>
-                    Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
-                </p>
-
-                <h2 class="content-subhead">Try Resizing your Browser</h2>
-                <p>
-                    Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
-                </p>
-            </div>
-        </div>
-    </form>
-
-    <form id="form-wifi" class="pure-form form-settings">
         <div class="panel" id="panel-wifi">
+          <div class="header">
+            <h1>WIFI</h1>
+            <h2>Configurations</h2>
+          </div>
 
-            <div class="header">
-                <h1>WIFI</h1>
-                <h2>You can configure up to 5 different WiFi networks. The device will try to connect in order of signal strength.</h2>
-            </div>
-
-            <div class="page">
-
-                <fieldset>
-
-                    <legend>General</legend>
-
-                    <div class="pure-g">
-                        <div class="pure-u-1 pure-u-lg-1-4"></div>
-                        <div class="pure-u-1 pure-u-lg-3-4 hint">Device hostname can be configured on the GENERAL tab.</div>
-                    </div>
-
-                    <div class="pure-g">
-                        <label class="pure-u-1 pure-u-lg-1-4">Scan networks</label>
-                        <div class="pure-u-1 pure-u-lg-1-4"><input type="checkbox" name="wifiScan" tabindex="1" /></div>
-                        <div class="pure-u-0 pure-u-lg-1-2"></div>
-                        <div class="pure-u-0 pure-u-lg-1-4"></div>
-                        <div class="pure-u-1 pure-u-lg-3-4 hint">
-                            WebIOT will scan for visible WiFi SSIDs and try to connect to networks defined below in order of <strong>signal strength</strong>, even if multiple AP share the same SSID.
-                            When disabled, WebIOT will try to connect to the networks in the same order they are listed below.
-                            Disable this option if you are <strong>connecting to a single access point</strong> (or router) or to a <strong>hidden SSID</strong>.
-                        </div>
-                        <div class="pure-u-0 pure-u-lg-1-4"></div>
-                        <button id="button-wifi-scan" class="pure-button" type="button">Scan now</button>
-                        <div class="pure-u-0 pure-u-lg-1-4 scan loading">
-                            <img src="images/loading.gif" alt="Scanning" inline></img>
-                        </div>
-                    </div>
-
-                    <div class="pure-g">
-                        <span class="pure-u-1 terminal" id="scanResult" name="scanResult"></span>
-                    </div>
-
-                    <legend>Networks</legend>
-
-                    <div id="networks" class="group-settings" data-settings-target="ssid pass" ></div>
-
-                    <button type="button" class="pure-button button-add-network">Add network</button>
-
-                </fieldset>
-            </div>
+          <div class="page"></div>
         </div>
-    </form>
+      </div>
+      <!-- content -->
     </div>
-</div>
-<script src="js/custom.js"></script>
-<script src="js/ui.js"></script>
+    <!-- layout -->
 
-</body>
+    <!-- <script src="js/custom.js"></script> -->
+
+    <script src="/js/ui.js"></script>
+    <script>
+      function getElements() {
+        return {
+          layout: document.getElementById("layout"),
+          menu: document.getElementById("menu"),
+          menuLink: document.getElementById("menuLink"),
+          linkStatus: document.getElementById("link-status"),
+          panelStatus: document.getElementById("panel-status"),
+          linkMqtt: document.getElementById("link-mqtt"),
+          panelMqtt: document.getElementById("panel-mqtt"),
+          linkEvents: document.getElementById("link-events"),
+          panelEvents: document.getElementById("panel-events"),
+          linkWifi: document.getElementById("link-wifi"),
+          panelWifi: document.getElementById("panel-wifi"),
+        };
+      }
+      // const linkStatus = document.getElementById('link-status');
+      // const panelStatus = document.getElementById('panel-status');
+
+      // linkStatus.addEventListener('click', function () {
+      //     panelStatus.classList.toggle('block');
+      // });
+      function handlePanel(e) {
+        var elements = getElements();
+
+        if (e.target.id === elements.linkStatus.id) {
+          elements.panelStatus.classList.add("block");
+          elements.panelMqtt.classList.remove("block");
+          elements.panelEvents.classList.remove("block");
+          elements.panelWifi.classList.remove("block");
+        }
+        if (e.target.id === elements.linkMqtt.id) {
+          elements.panelStatus.classList.remove("block");
+          elements.panelMqtt.classList.add("block");
+          elements.panelEvents.classList.remove("block");
+          elements.panelWifi.classList.remove("block");
+        }
+        if (e.target.id === elements.linkEvents.id) {
+          elements.panelStatus.classList.remove("block");
+          elements.panelMqtt.classList.remove("block");
+          elements.panelEvents.classList.add("block");
+          elements.panelWifi.classList.remove("block");
+        }
+        if (e.target.id === elements.linkWifi.id) {
+          elements.panelStatus.classList.remove("block");
+          elements.panelMqtt.classList.remove("block");
+          elements.panelEvents.classList.remove("block");
+          elements.panelWifi.classList.add("block");
+        }
+      }
+
+      document.addEventListener("click", handlePanel);
+    </script>
+  </body>
 </html>

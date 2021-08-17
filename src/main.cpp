@@ -5,7 +5,7 @@
 #include <ArduinoJson.h>
 #include <Splitter.h>
 #include <FS.h>
-//#include <Webserver.h>
+#include <WiFiManager.h>
 
 //PINES DE SALIDA
 #define led 14
@@ -20,20 +20,30 @@ void send_data_to_broker();
 void callback(char *topic, byte *payload, unsigned int length);
 void process_incoming_msg(String topic, String incoming);
 
+/**********dynamic contents ***********/
+const char get_toggle_digitalOut[] = {"/digital_outputs/toggle"};
+const char get_status_dig_out[] = {"/digital_outputs"};
+const char get_status_dig_in[] = {"/digital_inputs"};
+const char get_status_analog_output[] = "/analog_outputs";
+const char get_update_analog_output[] = "/analog_outputs/update";
+const char get_status_analog_inputs[] = "/analog_inputs";
+const char get_status_registers[] = "/registers";
+
 //-------------------VARIABLES GLOBALES--------------------------
 int contconexion = 0;
 
-//const char *ssid = "TeleCentro-82ba";
-//const char *password = "U2N2ZMLR2NQZ";
+const char *ssid = "TeleCentro-82bb";
+const char *password = "U2N2ZMLR2NQZ";
 
-const char *ssid = "webiot";
-const char *password = "webiotpswd";
+const char *ApSsid = "webiot";
+const char *ApPass = "webiotpswd";
 
 const char *mqtt_server = "webiot.com.ar";
 const int mqtt_port = 1893;
 
 unsigned long previousMillis = 0;
 long lastReconnectAttemp = 0;
+long lastReconnectWifi = 0;
 
 String dId = "webiot-1234";
 String webhook_pass = "ZF3TWfCbed";
@@ -45,6 +55,7 @@ Splitter splitter;
 WiFiClient espClient;
 PubSubClient client(espClient);
 ESP8266WebServer server(80);
+WiFiManager wm;
 
 long varsLastSend[20];
 String last_received_msg = "";
@@ -53,6 +64,7 @@ int prev_temp = 0;
 int prev_hum = 0;
 
 DynamicJsonDocument mqtt_data_doc(2048);
+// DynamicJsonDocument config_data_doc(512);
 
 //WiFiClient client;
 //------------------------CALLBACK-----------------------------
@@ -78,7 +90,7 @@ bool reconnect()
   if (!get_mqtt_credentials())
   {
     Serial.println("\n\n      Error getting mqtt credentials :( \n\n RESTARTING IN 10 SECONDS");
-    delay(10000);
+    delay(30000);
     ESP.restart();
   }
 
@@ -98,7 +110,7 @@ bool reconnect()
   }
   else
   {
-    Serial.print("\n\n         Mqtt Client Connection Failed :( ");
+    Serial.println("Mqtt Client Connection Failed :( ");
   }
   return true;
 }
@@ -108,10 +120,13 @@ void check_mqtt_connection()
 
   if (WiFi.status() != WL_CONNECTED)
   {
-    Serial.print("\n\n         Ups WiFi Connection Failed :( ");
-    Serial.println(" -> Restarting...");
-    delay(15000);
-    ESP.restart();
+    long wifiWait = millis();
+    if (wifiWait - lastReconnectWifi > 30000)
+    {
+      lastReconnectWifi = millis();
+      Serial.println("WiFi Connection Failed :( ");
+      Serial.println(" -> Restarting...");
+    }
   }
 
   if (!client.connected())
@@ -237,6 +252,22 @@ void process_incoming_msg(String topic, String incoming)
   process_actuators();
 }
 
+char toggleOutput(String pinName)
+{
+  if (pinName.equals("dout1"))
+  {
+    digitalWrite(D7, !digitalRead(D7));
+    return digitalRead(D7);
+  }
+  else if (pinName.equals("dout2"))
+  {
+    digitalWrite(D8, !digitalRead(D8));
+    return digitalRead(D8);
+  }
+  else
+    return 2;
+}
+
 String getContentType(String filename)
 {
   if (server.hasArg("download"))
@@ -289,6 +320,34 @@ bool handleFileRead(String path)
     return true;
   }
   return false;
+}
+
+//get_status_dig_out
+void handleDigitalOutStatusJson()
+{
+  char someBuffer[200];
+  sprintf(someBuffer, "{\"digital_outputs\":{\"dout1\":%c,\"dout2\":%c}}", !digitalRead(D7) + 48, !digitalRead(D8) + 48);
+
+  server.send(200, "application/json", someBuffer);
+}
+//get_toggle_out
+void handleDigitalOutToggle()
+{
+  String someBuffer = "";
+  char stateOfPin = toggleOutput(server.arg(0));
+  someBuffer += String(stateOfPin, DEC);
+  server.send(200, "text/plain", someBuffer);
+}
+
+// handleResgistersStatus
+void handleResgistersStatus()
+{
+
+  int reg1 = random(1, 999);
+  int reg2 = random(1, 999);
+  char someBuffer[200];
+  sprintf(someBuffer, "{\"registers\":{\"reg1\":%d,\"reg2\":%d}}", reg1, reg2);
+  server.send(200, "application/json", someBuffer);
 }
 
 void send_data_to_broker()
@@ -375,42 +434,38 @@ bool get_mqtt_credentials()
 void setup()
 {
   // Inicia Salidas
+
   pinMode(led, OUTPUT);
+  pinMode(D7, OUTPUT);
+  pinMode(D8, OUTPUT);
 
   // Inicia Serial
   Serial.begin(9600);
   Serial.println("");
+
   SPIFFS.begin();
 
-  // Conexión WIFI
-  WiFi.begin(ssid, password);
-  while (WiFi.status() != WL_CONNECTED and contconexion < 50)
-  { //Cuenta hasta 50 si no se puede conectar lo cancela
-    ++contconexion;
-    delay(500);
-    Serial.print(".");
-  }
-  if (contconexion < 50)
-  {
-    //para usar con ip fija
-    IPAddress ip(192, 168, 0, 156);
-    IPAddress gateway(192, 168, 0, 1);
-    IPAddress subnet(255, 255, 255, 0);
-    WiFi.config(ip, gateway, subnet);
-
-    Serial.println("");
-    Serial.println("WiFi conectado");
-    Serial.println(WiFi.localIP());
-  }
-  else
-  {
-    Serial.println("");
-    Serial.println("Error de conexion");
-  }
+  //Conexión WIFI
 
   WiFi.mode(WIFI_STA);
 
+  if (wm.autoConnect("AutoConnectAP"))
+  {
+    Serial.println("connected...yeey :)");
+  }
+  else
+  {
+    Serial.println("Configportal running");
+  }
   client.setCallback(callback);
+
+  server.on(get_status_dig_out, handleDigitalOutStatusJson);
+  server.on(get_toggle_digitalOut, handleDigitalOutToggle);
+  // server.on(get_status_dig_in, handleDigitalInStatusJson);
+  // server.on(get_status_analog_output, handleAnalogOutStatus);
+  // server.on(get_update_analog_output, handleSetAnalogOut);
+  // server.on(get_status_analog_inputs, handleAnalogInStatus);
+  server.on(get_status_registers, handleResgistersStatus);
 
   server.onNotFound([]()
                     {

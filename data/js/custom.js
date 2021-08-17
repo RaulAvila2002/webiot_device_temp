@@ -1,4 +1,4 @@
-var debug = false;
+var debug = true;
 var websock;
 var password = false;
 var maxNetworks;
@@ -869,6 +869,7 @@ function toggleMenu() {
     $("#layout").toggleClass("active");
     $("#menu").toggleClass("active");
     $("#menuLink").toggleClass("active");
+
 }
 
 function showPanel() {
@@ -877,6 +878,10 @@ function showPanel() {
     $("#" + $(this).attr("data")).show();
 }
 
+function showStatus() {
+    $("#panel-status").classList.add('block');
+
+}
 
 
 // -----------------------------------------------------------------------------
@@ -1235,9 +1240,10 @@ $(function() {
     createCheckboxes();
     setInterval(function() { keepTime(); }, 1000);
 
-
+ 
     $("#menuLink").on("click", toggleMenu);
     $(".pure-menu-link").on("click", showPanel);
+
     $("progress").attr({ value: 0, max: 100 });
 
     $("#button-wifi-scan").on("click", doScan);

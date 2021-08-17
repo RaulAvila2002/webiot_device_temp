@@ -7,6 +7,8 @@
 class Webserver : public ESP8266WebServer
 {
 public:
+    Webserver();
+
 private:
 };
 
