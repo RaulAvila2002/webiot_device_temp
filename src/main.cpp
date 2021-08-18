@@ -28,7 +28,7 @@ const char get_status_analog_output[] = "/analog_outputs";
 const char get_update_analog_output[] = "/analog_outputs/update";
 const char get_status_analog_inputs[] = "/analog_inputs";
 const char get_status_registers[] = "/registers";
-
+const char get_config[] = "/config";
 //-------------------VARIABLES GLOBALES--------------------------
 int contconexion = 0;
 
@@ -47,6 +47,7 @@ long lastReconnectWifi = 0;
 
 String dId = "webiot-1234";
 String webhook_pass = "ZF3TWfCbed";
+
 String webhook_endpoint = "http://webiot.com.ar:3001/api/getdevicecredentials";
 
 Splitter splitter;
@@ -342,11 +343,17 @@ void handleDigitalOutToggle()
 // handleResgistersStatus
 void handleResgistersStatus()
 {
-
   int reg1 = random(1, 999);
   int reg2 = random(1, 999);
   char someBuffer[200];
   sprintf(someBuffer, "{\"registers\":{\"reg1\":%d,\"reg2\":%d}}", reg1, reg2);
+  server.send(200, "application/json", someBuffer);
+}
+
+void handleConfig()
+{
+  char someBuffer[200];
+  sprintf(someBuffer, "{\"config\":{\"ssid\":\"%s\",\"pass\":\"%s\",\"server\":\"%s\",\"port\":%d,\"dId\":\"%s\",\"dIdPass\":\"%s\"}}", ssid, password, mqtt_server, mqtt_port, dId.c_str(), webhook_pass.c_str());
   server.send(200, "application/json", someBuffer);
 }
 
@@ -466,7 +473,7 @@ void setup()
   // server.on(get_update_analog_output, handleSetAnalogOut);
   // server.on(get_status_analog_inputs, handleAnalogInStatus);
   server.on(get_status_registers, handleResgistersStatus);
-
+  server.on(get_config, handleConfig);
   server.onNotFound([]()
                     {
                       if (!handleFileRead(server.uri()))
