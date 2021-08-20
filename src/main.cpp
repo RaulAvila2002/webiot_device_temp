@@ -456,7 +456,7 @@ void setup()
 
   WiFi.mode(WIFI_STA);
 
-  if (wm.autoConnect("AutoConnectAP"))
+  if (wm.autoConnect("WEBIOT-AP"))
   {
     Serial.println("connected...yeey :)");
   }
