@@ -353,7 +353,7 @@ void handleResgistersStatus()
 void handleConfig()
 {
   char someBuffer[200];
-  sprintf(someBuffer, "{\"config\":{\"ssid\":\"%s\",\"pass\":\"%s\",\"server\":\"%s\",\"port\":%d,\"dId\":\"%s\",\"dIdPass\":\"%s\"}}", ssid, password, mqtt_server, mqtt_port, dId.c_str(), webhook_pass.c_str());
+  sprintf(someBuffer, "{\"config\":{\"ssid\":\"%s\",\"pass\":\"%s\",\"server\":\"%s\",\"port\":%d,\"dId\":\"%s\",\"dIdPass\":\"%s\"}}", wm.getWiFiSSID().c_str(), wm.getWiFiPass().c_str(), mqtt_server, mqtt_port, dId.c_str(), webhook_pass.c_str());
   server.send(200, "application/json", someBuffer);
 }
 
