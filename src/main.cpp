@@ -1,3 +1,8 @@
+/*-------------------------
+  -  
+  -
+  -
+  -------------------------*/
 #include <ESP8266WiFi.h>
 #include <PubSubClient.h>
 #include <ESP8266HTTPClient.h>
@@ -32,7 +37,7 @@ const char get_config[] = "/config";
 //-------------------VARIABLES GLOBALES--------------------------
 int contconexion = 0;
 
-const char *ssid = "TeleCentro-82bb";
+const char *ssid = "TeleCentro-82ba";
 const char *password = "U2N2ZMLR2NQZ";
 
 const char *ApSsid = "webiot";
@@ -45,10 +50,10 @@ unsigned long previousMillis = 0;
 long lastReconnectAttemp = 0;
 long lastReconnectWifi = 0;
 
-String dId = "webiot-1234";
-String webhook_pass = "ZF3TWfCbed";
+String dId = "123456";
+String webhook_pass = "XVhl1ctswI";
 
-String webhook_endpoint = "http://webiot.com.ar:3001/api/getdevicecredentials";
+String webhook_endpoint = "http://168.181.187.173:3001/api/getdevicecredentials";
 
 Splitter splitter;
 
@@ -116,8 +121,12 @@ bool reconnect()
   return true;
 }
 
+//  Chequeo de conexiones
+
 void check_mqtt_connection()
 {
+
+  //  Verifica conexión wifi
 
   if (WiFi.status() != WL_CONNECTED)
   {
@@ -129,6 +138,8 @@ void check_mqtt_connection()
       Serial.println(" -> Restarting...");
     }
   }
+
+  //  Verifica conexion MQTT
 
   if (!client.connected())
   {
@@ -165,6 +176,7 @@ void process_sensors()
   {
     return;
   }
+
   mqtt_data_doc["variables"][0]["last"]["value"] = temp;
 
   //save temp?
@@ -180,7 +192,7 @@ void process_sensors()
   }
   else
   {
-    mqtt_data_doc["variables"][0]["last"]["save"] = 1;
+    mqtt_data_doc["variables"][0]["last"]["save"] = 0;
   }
 
   prev_temp = temp;
@@ -200,13 +212,13 @@ void process_sensors()
   }
   else
   {
-    mqtt_data_doc["variables"][1]["last"]["save"] = 1;
+    mqtt_data_doc["variables"][1]["last"]["save"] = 0;
   }
 
   prev_hum = hum;
 
   //get led status
-  mqtt_data_doc["variables"][3]["last"]["value"] = (HIGH == digitalRead(led));
+  //mqtt_data_doc["variables"][3]["last"]["value"] = (HIGH == digitalRead(led));
 }
 
 void process_actuators()
@@ -233,7 +245,7 @@ void process_incoming_msg(String topic, String incoming)
   last_received_msg = incoming;
 
   String variable = splitter.split(topic, '/', 2);
-
+  Serial.println(variable);
   for (int i = 0; i < mqtt_data_doc["variables"].size(); i++)
   {
 
@@ -243,7 +255,6 @@ void process_incoming_msg(String topic, String incoming)
       DynamicJsonDocument doc(256);
       deserializeJson(doc, incoming);
       mqtt_data_doc["variables"][i]["last"] = doc;
-
       long counter = mqtt_data_doc["variables"][i]["counter"];
       counter++;
       mqtt_data_doc["variables"][i]["counter"] = counter;
@@ -386,6 +397,8 @@ void send_data_to_broker()
 
       client.publish(topic.c_str(), toSend.c_str());
 
+      Serial.println(topic);
+      Serial.println(toSend);
       //STATS
       long counter = mqtt_data_doc["variables"][i]["counter"];
       counter++;
@@ -430,6 +443,7 @@ bool get_mqtt_credentials()
     Serial.println("Mqtt Credentials Obtained Successfully :) ");
 
     deserializeJson(mqtt_data_doc, responseBody);
+    Serial.println(responseBody);
     http.end();
     delay(1000);
   }
@@ -453,17 +467,47 @@ void setup()
   SPIFFS.begin();
 
   //Conexión WIFI
-
+  //wm.resetSettings();
   WiFi.mode(WIFI_STA);
 
-  if (wm.autoConnect("WEBIOT-AP"))
+  Serial.print("\n\n\nWiFi Connection in Progress");
+  WiFi.begin(ssid, password);
+
+  int counter = 0;
+
+  while (WiFi.status() != WL_CONNECTED)
+  {
+    delay(500);
+    Serial.print(".");
+    counter++;
+
+    if (counter > 10)
+    {
+      Serial.print("  ⤵");
+      Serial.print("\n\n         Ups WiFi Connection Failed :( ");
+      Serial.println(" -> Restarting...");
+      delay(2000);
+      ESP.restart();
+    }
+  }
+
+  Serial.print("  ⤵");
+
+  //Printing local ip
+  Serial.println("\n\n         WiFi Connection -> SUCCESS :)");
+  Serial.print("\n         Local IP -> ");
+  Serial.print(WiFi.localIP());
+  Serial.println(" ");
+
+  /*if (wm.autoConnect("WEBIOT-AP"))
   {
     Serial.println("connected...yeey :)");
   }
   else
   {
-    Serial.println("Configportal running");
+    Serial.println("Config Portal Running");
   }
+  */
   client.setCallback(callback);
 
   server.on(get_status_dig_out, handleDigitalOutStatusJson);

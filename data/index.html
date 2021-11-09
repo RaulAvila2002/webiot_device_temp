@@ -18,8 +18,9 @@
     <script>
       // Refresh values
       $(document).ready(function () {
-        setInterval("get_digital_output_status()", 1000);
-        setInterval("get_status_registers()", 1000);
+        setInterval("get_digital_output_status()", 2000);
+        setInterval("get_status_registers()", 5000);
+        get_config();
       });
 
       function get_digital_output_status() {
@@ -75,7 +76,7 @@
           dataType: "json",
           success: function (response) {
             $("#ssidName").html(response.config["ssid"]);
-            $("#pass").html(response.config["pass"]);
+            $("#aligned-password").html(response.config["pass"]);
           },
         });
       }
@@ -280,14 +281,14 @@
               </div>
               <div class="pure-control-group">
                 <label for="aligned-password">Password</label>
-                <input
-                  type="password"
-                  id="aligned-password"
-                  placeholder="Password"
-                />
+                <input type="password" id="aligned-password" />
               </div>
               <div class="pure-controls">
-                <button type="submit" class="pure-button pure-button-primary">
+                <button
+                  type="submit"
+                  class="pure-button pure-button-primary"
+                  onclick="get_config()"
+                >
                   Submit
                 </button>
               </div>
@@ -326,7 +327,7 @@
       // });
       function handlePanel(e) {
         var elements = getElements();
-
+        get_config();
         if (e.target.id === elements.linkStatus.id) {
           elements.panelStatus.classList.add("block");
           elements.panelMqtt.classList.remove("block");
@@ -350,7 +351,6 @@
           elements.panelMqtt.classList.remove("block");
           elements.panelEvents.classList.remove("block");
           elements.panelWifi.classList.add("block");
-          get_config();
         }
       }
 
