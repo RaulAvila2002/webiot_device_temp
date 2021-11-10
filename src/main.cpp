@@ -1,7 +1,11 @@
 /*-------------------------
-  -  
-  -
-  -
+  - Ejemplo de Termostato IOT
+  - Mide temperartura con ds18b20
+  - Posee dos salidas Rele
+  - Interfaz web
+  - Encoder 
+  - Display i2c
+  - Timer - Alarma
   -------------------------*/
 #include <ESP8266WiFi.h>
 #include <PubSubClient.h>
@@ -11,9 +15,12 @@
 #include <Splitter.h>
 #include <FS.h>
 #include <WiFiManager.h>
+#include <OneWire.h>
+#include <DallasTemperature.h>
 
 //PINES DE SALIDA
-#define led 14
+#define RY1 D7
+#define RY2 D8
 
 //Functions definitions
 bool get_mqtt_credentials();
@@ -50,8 +57,8 @@ unsigned long previousMillis = 0;
 long lastReconnectAttemp = 0;
 long lastReconnectWifi = 0;
 
-String dId = "123456";
-String webhook_pass = "XVhl1ctswI";
+String dId = "11223344";
+String webhook_pass = "hTOsfOGGSe";
 
 String webhook_endpoint = "http://168.181.187.173:3001/api/getdevicecredentials";
 
@@ -62,6 +69,8 @@ WiFiClient espClient;
 PubSubClient client(espClient);
 ESP8266WebServer server(80);
 WiFiManager wm;
+OneWire ds(D6); // on pin 10 (a 4.7K resistor is necessary)
+DallasTemperature sensor(&ds);
 
 long varsLastSend[20];
 String last_received_msg = "";
@@ -168,11 +177,10 @@ void check_mqtt_connection()
 void process_sensors()
 {
 
-  float temp = random(20, 40);
+  sensor.requestTemperatures();
+  float temp = sensor.getTempCByIndex(0);
 
-  float hum = random(60, 80);
-
-  if (isnan(temp) || isnan(hum))
+  if (isnan(temp))
   {
     return;
   }
@@ -192,30 +200,10 @@ void process_sensors()
   }
   else
   {
-    mqtt_data_doc["variables"][0]["last"]["save"] = 0;
+    mqtt_data_doc["variables"][0]["last"]["save"] = 1;
   }
 
   prev_temp = temp;
-
-  mqtt_data_doc["variables"][1]["last"]["value"] = hum;
-
-  //save hum?
-  dif = hum - prev_hum;
-  if (dif < 0)
-  {
-    dif *= -1;
-  }
-
-  if (dif >= 2)
-  {
-    mqtt_data_doc["variables"][1]["last"]["save"] = 1;
-  }
-  else
-  {
-    mqtt_data_doc["variables"][1]["last"]["save"] = 0;
-  }
-
-  prev_hum = hum;
 
   //get led status
   //mqtt_data_doc["variables"][3]["last"]["value"] = (HIGH == digitalRead(led));
@@ -223,18 +211,18 @@ void process_sensors()
 
 void process_actuators()
 {
-  if (mqtt_data_doc["variables"][2]["last"]["value"] == "true")
-  {
-    digitalWrite(led, HIGH);
-    mqtt_data_doc["variables"][2]["last"]["value"] = "";
-    varsLastSend[3] = 0;
-  }
-  else if (mqtt_data_doc["variables"][2]["last"]["value"] == "false")
-  {
-    digitalWrite(led, LOW);
-    mqtt_data_doc["variables"][2]["last"]["value"] = "";
-    varsLastSend[3] = 0;
-  }
+  // if (mqtt_data_doc["variables"][2]["last"]["value"] == "true")
+  // {
+  //   digitalWrite(RY1, HIGH);
+  //   mqtt_data_doc["variables"][2]["last"]["value"] = "";
+  //   varsLastSend[3] = 0;
+  // }
+  // else if (mqtt_data_doc["variables"][2]["last"]["value"] == "false")
+  // {
+  //   digitalWrite(RY1, LOW);
+  //   mqtt_data_doc["variables"][2]["last"]["value"] = "";
+  //   varsLastSend[3] = 0;
+  // }
 }
 
 //TEMPLATE ⤵
@@ -268,13 +256,13 @@ char toggleOutput(String pinName)
 {
   if (pinName.equals("dout1"))
   {
-    digitalWrite(D7, !digitalRead(D7));
-    return digitalRead(D7);
+    digitalWrite(RY1, !digitalRead(RY1));
+    return digitalRead(RY1);
   }
   else if (pinName.equals("dout2"))
   {
-    digitalWrite(D8, !digitalRead(D8));
-    return digitalRead(D8);
+    digitalWrite(RY2, !digitalRead(RY2));
+    return digitalRead(RY2);
   }
   else
     return 2;
@@ -338,7 +326,7 @@ bool handleFileRead(String path)
 void handleDigitalOutStatusJson()
 {
   char someBuffer[200];
-  sprintf(someBuffer, "{\"digital_outputs\":{\"dout1\":%c,\"dout2\":%c}}", !digitalRead(D7) + 48, !digitalRead(D8) + 48);
+  sprintf(someBuffer, "{\"digital_outputs\":{\"dout1\":%c,\"dout2\":%c}}", !digitalRead(RY1) + 48, !digitalRead(RY2) + 48);
 
   server.send(200, "application/json", someBuffer);
 }
@@ -456,13 +444,15 @@ void setup()
 {
   // Inicia Salidas
 
-  pinMode(led, OUTPUT);
-  pinMode(D7, OUTPUT);
-  pinMode(D8, OUTPUT);
+  pinMode(RY1, OUTPUT);
+  pinMode(RY2, OUTPUT);
 
   // Inicia Serial
   Serial.begin(9600);
   Serial.println("");
+
+  // Inicializar Sensor
+  sensor.begin();
 
   SPIFFS.begin();
 
