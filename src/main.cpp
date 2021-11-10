@@ -3,7 +3,7 @@
   - Mide temperartura con ds18b20
   - Posee dos salidas Rele
   - Interfaz web
-  - Encoder 
+  - Encoder o Botonera i2c
   - Display i2c
   - Timer - Alarma
   -------------------------*/
